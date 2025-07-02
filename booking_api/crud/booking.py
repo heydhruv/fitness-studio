@@ -11,7 +11,6 @@ from booking_api.schemas.booking import BookingCreate
 
 def create_booking(db: Session, booking: BookingCreate):
     now_utc = datetime.now(timezone.utc)
-    print("------------------------", now_utc)
     fitness_class = (
         db.query(FitnessClass)
         .filter(
@@ -25,6 +24,15 @@ def create_booking(db: Session, booking: BookingCreate):
         raise HTTPException(status_code=404, detail="Class not found")
     if fitness_class.available_slots <= 0:
         raise HTTPException(status_code=400, detail="No slots available")
+
+    existing_booking = db.query(Booking).filter(
+        Booking.class_id == booking.class_id,
+        Booking.client_id == booking.client_id
+    ).first()
+
+    if existing_booking:
+        raise HTTPException(
+            status_code=409, detail="Client already booked this class.")
 
     try:
 
